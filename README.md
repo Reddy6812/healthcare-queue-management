@@ -5,34 +5,56 @@
 ```markdown
 # Healthcare Appointment and Queue Management System
 
-A full-stack web application to streamline patient appointment scheduling, real-time queue management, and automated notifications for clinics and hospitals.
+A full-stack web application designed to streamline patient scheduling, real-time queue updates, and automated notifications in clinics and hospitals.
+
+---
+
+## Table of Contents
+
+1. [Features](#features)  
+2. [Tech Stack](#tech-stack)  
+3. [Project Structure](#project-structure)  
+4. [Authentication](#authentication)  
+5. [Real-Time Queue Updates](#real-time-queue-updates)  
+6. [Notifications](#notifications)  
+7. [Getting Started](#getting-started)  
+8. [API Endpoints](#api-endpoints)  
+9. [Admin Panel](#admin-panel)  
+10. [Future Enhancements](#future-enhancements)  
+11. [License](#license)
+
+---
 
 ## Features
 
-- Patient registration and doctor selection
-- Appointment scheduling with queue management
-- Real-time queue updates via WebSockets
-- JWT-based user authentication (patients, doctors, admins)
-- SMS notifications (Twilio) for patient turn alerts
-- Notification logging and admin management panel
-- RESTful API built with Django REST Framework
-- Containerized with Docker and orchestrated using Docker Compose
+- Patient registration and doctor selection  
+- Appointment scheduling and live queue management  
+- Real-time queue updates via WebSockets  
+- JWT-based authentication for patients, doctors, and admins  
+- SMS notifications using Twilio when it’s the patient’s turn  
+- Notification logs stored in the database  
+- Admin dashboard for managing users and queues  
+- RESTful APIs using Django REST Framework  
+- Dockerized deployment with Docker Compose
 
 ---
 
 ## Tech Stack
 
-### Backend
+**Backend:**
 - Django (REST Framework)
 - PostgreSQL
-- Celery (Task Queue)
-- Redis (Broker for Celery and WebSockets)
-- Django Channels (WebSocket support)
-- Simple JWT (Authentication)
+- Redis
+- Django Channels (WebSockets)
+- Celery (Task queue)
 - Twilio (SMS notifications)
+- Simple JWT (Authentication)
 
-### Frontend (Optional)
-- React (Patient/Admin dashboard UI)
+**Frontend:**
+- React (optional for patient/admin dashboards)
+
+**DevOps:**
+- Docker, Docker Compose
 
 ---
 
@@ -40,12 +62,12 @@ A full-stack web application to streamline patient appointment scheduling, real-
 
 ```
 healthcare-queue-management/
-├── backend/              # Django Backend (REST APIs, WebSockets)
-│   ├── appointments/     # App logic: models, views, serializers, tasks
-│   ├── healthcare/       # Project settings, routing, ASGI/WSGI setup
+├── backend/
+│   ├── appointments/         # App logic (models, views, serializers, tasks)
+│   ├── healthcare/           # Project config (settings, routing)
 │   ├── manage.py
 │   ├── requirements.txt
-├── frontend/             # React Frontend (optional)
+├── frontend/                 # Optional React frontend
 ├── docker-compose.yml
 └── README.md
 ```
@@ -54,37 +76,40 @@ healthcare-queue-management/
 
 ## Authentication
 
-- Uses JWT tokens (via SimpleJWT) for secure login
-- Admins/staff are required to perform queue actions like notify-next
-- Token Endpoints:
-  - `POST /api/token/` (obtain token)
-  - `POST /api/token/refresh/` (refresh token)
+- Uses **JWT authentication** via `djangorestframework-simplejwt`
+- Role-based access:
+  - Patients can register and view queues
+  - Admins/staff can manage queues and notify patients
+- Token endpoints:
+  - `POST /api/token/` → Get access and refresh tokens
+  - `POST /api/token/refresh/` → Refresh access token
 
 ---
 
 ## Real-Time Queue Updates
 
-- WebSocket endpoint:  
-  `ws://localhost:8000/ws/queue/<doctor_id>/`
-
-- Clients subscribed to this channel receive real-time queue updates when a change occurs.
+- **WebSocket Endpoint:**
+  ```
+  ws://localhost:8000/ws/queue/<doctor_id>/
+  ```
+- When queue changes (e.g., after notify-next), real-time updates are broadcast to all subscribed clients
 
 ---
 
 ## Notifications
 
-- SMS notifications are sent using Twilio
-- Notifications are logged to the database
-- When a patient reaches the front of the queue, they receive a message like:  
-  `"It is your turn. Please proceed to the doctor's office."`
+- SMS notifications are sent using the **Twilio API**
+- Triggered when a patient reaches the front of the queue
+- Message: `"It is your turn. Please proceed to the doctor's office."`
+- All messages are logged in the database under the `Notification` model
 
 ---
 
-## Getting Started (with Docker)
+## Getting Started
 
 ### Prerequisites
 
-- Docker and Docker Compose installed on your machine
+- Docker and Docker Compose installed
 
 ### 1. Clone the Repository
 
@@ -95,13 +120,15 @@ cd healthcare-queue-management
 
 ### 2. (Optional) Set Environment Variables
 
-You can define Twilio credentials as environment variables, or edit directly in `settings.py`.
+If you use `.env`, or export directly:
 
 ```bash
 export TWILIO_ACCOUNT_SID=your_account_sid
 export TWILIO_AUTH_TOKEN=your_auth_token
 export TWILIO_FROM_NUMBER=+1234567890
 ```
+
+Or hardcode into `settings.py` during development.
 
 ### 3. Build Docker Containers
 
@@ -115,56 +142,45 @@ docker-compose build
 docker-compose up
 ```
 
-### 5. Create a Superuser for Admin Panel
+### 5. Create a Superuser for Admin Access
 
 ```bash
 docker-compose exec backend python manage.py createsuperuser
 ```
 
-Then visit `http://localhost:8000/admin/` to log in.
+Visit: [http://localhost:8000/admin/](http://localhost:8000/admin/)
 
 ---
 
 ## API Endpoints
 
-| Method | Endpoint                          | Description                            |
-|--------|-----------------------------------|----------------------------------------|
-| POST   | `/api/patients/`                  | Create a patient                       |
-| POST   | `/api/doctors/`                   | Create a doctor                        |
-| POST   | `/api/appointments/`              | Create an appointment                  |
-| POST   | `/api/enqueue/`                   | Add patient to queue                   |
-| GET    | `/api/queue/<doctor_id>/`         | Get current queue for a doctor         |
-| POST   | `/api/notify-next/`               | Notify and advance queue (admin only)  |
-| POST   | `/api/token/`                     | Obtain JWT token                       |
-| POST   | `/api/token/refresh/`             | Refresh JWT token                      |
+### Authentication
+
+| Method | Endpoint              | Description               |
+|--------|-----------------------|---------------------------|
+| POST   | `/api/token/`         | Obtain JWT tokens         |
+| POST   | `/api/token/refresh/` | Refresh JWT access token  |
+
+### Core API
+
+| Method | Endpoint                       | Description                             |
+|--------|--------------------------------|-----------------------------------------|
+| POST   | `/api/patients/`               | Register new patient                    |
+| POST   | `/api/doctors/`                | Register new doctor                     |
+| POST   | `/api/appointments/`           | Create appointment                      |
+| POST   | `/api/enqueue/`                | Add patient to doctor’s queue           |
+| GET    | `/api/queue/<doctor_id>/`      | View current queue for a doctor         |
+| POST   | `/api/notify-next/`            | Advance queue and notify next (admin)   |
 
 ---
 
-## Admin Dashboard
+## Admin Panel
 
 - Accessible at: `http://localhost:8000/admin/`
-- Manage doctors, patients, appointments, and view notification logs
+- Manage:
+  - Doctors and patients
+  - Appointments
+  - Queues
+  - Notification logs
 
 ---
-
-## Future Enhancements
-
-- Doctor availability and time slot scheduling
-- Patient self-check-in via mobile web app
-- Email notification support
-- Analytics dashboard and reporting
-
----
-
-## License
-
-MIT License  
-Copyright (c) 2025
-
----
-
-## Screenshots / Diagrams (Optional)
-
-Add UI wireframes, system diagrams, or live screenshots here to help users understand how the system looks and works.
-
-```
