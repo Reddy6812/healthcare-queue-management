@@ -1,7 +1,7 @@
 # healthcare-queue-management
 ---
 
-```
+``` markdown
 
 A full-stack web application designed to streamline patient scheduling, real-time queue management, and automated notifications in clinics and hospitals.
 
